@@ -1,0 +1,236 @@
+\documentclass{beamer}
+
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+% macros
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Ha}{\mathbb{H}}
+\newcommand{\C}{\mathbb{C}}
+
+
+\usetheme{metropolis}   
+
+\title{Unconstrained Optimization}
+\author{Anders Poirel}
+\institute{University of California, Santa Cruz}
+
+\begin{document}
+    
+\maketitle
+    
+    \begin{frame}{Multivariable Calculus}
+        \begin{itemize}
+            \item \alert{Gradient} of f: $\nabla f = \left( \frac{\partial f}{\partial x_1}, \ldots , \frac{\partial f}{\partial x_n} \right)$
+            
+            \item $\mathbf{x^*}$ is a \alert{stationary} point of $f$: $\nabla f(\mathbf{x^*}) = \mathbf{0}$
+            
+            \item \alert{Directional derivative} of $f$ at $\mathbf{x}$ along direction $\mathbf{v}$:
+                $\frac{d}{dt}f(\mathbf{x} + t\mathbf{v})\Big\rvert_{t=0} = \nabla f(\mathbf{x}) \cdot \mathbf{v}$
+
+            \item \alert{Hessian} of $f$: $\nabla^2 f = 
+                \begin{bmatrix}
+                    \frac{\partial^2 f}{\partial x_1^2} & \cdots & \frac{\partial^2 f}{\partial x_1 \partial x_n} \\
+                    \vdots & \ddots & \vdots \\
+                    \frac{\partial^2 f}{\partial x_n \partial x_1} & \cdots & \frac{\partial^2 f}{\partial x_n^2}
+                \end{bmatrix}$
+
+            \item $n \times n$ matrix $A$ is \alert{positive definite}: $\forall \mathbf{z} \neq \mathbf{0}, \mathbf{z}^TA\mathbf{z} > 0$
+        \end{itemize}
+    \end{frame}
+
+    \begin{frame}{Finding Local Minima}
+        \begin{block}{Sufficient Conditions for Local Minima} Suppose $\nabla ^f$ is continous in an \alert{open neighborhood} of $\mathbf{x^*}$,and $\nabla f(\mathbf{x^*}) = \mathbf{0}$, and $\nabla^2 f(\mathbf{x^*})$ is \alert{positive definite}. \\
+        Then $\mathbf{x^*}$ is a strict local minimum.
+        \end{block}
+
+    \end{frame}
+
+    \begin{frame}{Problem}
+        Let $f: \R^n \rightarrow \R $. 
+        \begin{itemize}
+        \item We assume $f$ is $C^1$, that is, for all $\mathbf{x},$ $\nabla f(\mathbf{x})$ exist and is continuous.
+
+        \item We want to find $\text{argmin}_{\mathbf{x}} f(\textbf{x})$ 
+        
+        \item However, this problem does not always have a closed solution (or finding one is impractical), so we want a numerical method to solve this.  
+        \end{itemize}
+    \end{frame}
+
+
+    \begin{frame}{Descent Directions (1)}
+        \begin{block}{Steepest descent}
+            At $\mathbf{x}$, the direction along which $f$ is decreasing the most rapidly is $\mathbf{p} = -\nabla f(\mathbf{x})$ 
+        \end{block}
+
+        \begin{alertblock}{Proof}
+            Let $\theta$ be the angle between $\nabla f$ and $\mathbf{p}$. \\
+            The directional derivative of $f$ at $\mathbf{x}$ is given by $\nabla f(\mathbf{x}) \cdot \mathbf{p} = \Vert \nabla f (\mathbf{x}) \Vert \Vert \mathbf{p} \Vert \cos(\theta)$. This is minimized when $\cos(\theta) = \pm \pi$, that is, $\mathbf{p} = -c \nabla f(\mathbf{x})$. \qed
+        \end{alertblock}
+    \end{frame}
+ 
+    \begin{frame}{Descent Directions (2)}
+        \begin{itemize}
+        \item In general, we are ``going down'' as long as the direction is not orthorgonal to $\nabla f$:
+        
+        \item $\mathbf{p}$ is a \alert{descent direction} at $\mathbf{x}$: $-\frac{\pi}{2} < (\nabla f(\mathbf{x}), \mathbf{p}) < \frac{\pi}{2}$
+        
+        \item So to tend towards a minimum from a point $\mathbf{x_k}$, perform an update of the form $\mathbf{x_{k+1}} = \mathbf{x_k} + \alpha \mathbf{p_k}$
+        \end{itemize}
+    \end{frame}
+
+    \begin{frame}{Wolfe Conditions (1)}
+        \begin{block}{Sufficient Decrease}
+            \begin{columns}
+            \column{0.5\textwidth}
+            \begin{itemize}
+            \item $\alpha_k$ should yield a large enough decrease in $f$:
+            $$f(\mathbf{x_k} + \alpha_k\mathbf{p_k}) \leq f(\mathbf{x_k}) + c_1 \alpha_k \nabla f(\mathbf{x_k})^\top \mathbf{p_k}$$
+            Where $0< c_1 < 1$ \\
+            \item i.e reduction in $f$ should be proportional to both the step length and the directional derivative.
+            \end{itemize}
+            \column{0.5\textwidth}
+            
+            \begin{figure}
+                \centering
+                \includegraphics[scale = 0.5]{"sufficient decrease condition".png}
+                \caption{Sufficient decrease condition}
+            \end{figure}
+        
+            \end{columns}
+        \end{block}
+
+    \end{frame}
+
+    \begin{frame}{Wolfe Conditions (2)}
+        \begin{columns}
+
+        \column{0.5\textwidth}
+        \begin{block}{Curvature Condition}
+        \begin{itemize}
+            \item Sufficient decrease condition is satisfied for all sufficiently small a, so we want to prevent steps lengths $\alpha_k$ that are too small:
+            $ \nabla f(\mathbf{x_k} + \alpha_k \mathbf{p_k})^\top \mathbf{p_k} \geq c_2 \nabla f(\mathbf{x_k})^\top \mathbf{p_k}$
+            Where $0 < c_1 < c_2 < 1$. \\
+            \item i.e. the slope be decreased by a sufficient amount.   
+        \end{itemize}
+        \end{block}
+
+        \column{0.5\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[scale = 0.5]{"curvature condition".png}
+            \caption{Curvature condition}
+        \end{figure}
+
+        \end{columns}
+    \end{frame}
+
+
+    \begin{frame}{Line Search Methods}
+        
+        Putting all of this together we get an optimization algorithm: \\
+        Set a starting point $\mathbf{x_0}$. Then for $k = 1,2, \ldots$,
+        $$ \mathbf{x_{k+1}} = \mathbf{x_k} + \alpha_k\mathbf{p_k}$$
+        Where $\mathbf{p_k}$ is a \alert{descent direction} and $\alpha_k$ satisfies the \alert{Wolfe conditions}.
+        As we get closer to a \alert{stationary point}, $\mathbf{p_k}$ approaches $\mathbf{0}$.
+
+    \end{frame}
+
+    \begin{frame}{Lipschitz Continuity}
+        \begin{columns}
+        \column{0.5\textwidth}
+
+        \begin{itemize}
+        \item $F: \R^n \rightarrow \R^m$ is \alert{Lipschitz continous} on $S$: $\exists L > 0$ such that $\forall \mathbf{x}, \mathbf{y} \in S$, $\Vert F(\mathbf{x}) - F(\mathbf{y}) \Vert \leq L\Vert \mathbf{x} - \mathbf{y}\Vert$
+        \end{itemize}
+
+        \column{0.5\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[scale = 0.3]{"lipschitz condition".jpg}
+            \caption{Lipschitz continuous functions}
+        \end{figure}
+
+
+        \end{columns}
+    \end{frame}
+
+    \begin{frame}{Convergence of Line Search (1)}
+        \begin{block}{Zoutendjik's Theorem}
+            Consider an iteration of the form $\mathbf{x_{k+1}} = \mathbf{x_k} + \alpha_k \mathbf{p_k}$, where:
+            \begin{itemize} 
+                \item $\mathbf{p_k}$ is a \alert{descent direction} and $\alpha_k$ satisfies the \alert{Wolfe conditions}. 
+                \item $f$ is bounded below in $\R^n$      
+                \item f \alert{continuously differentiable} in open set $\mathcal{N}$ containing level set $\mathcal{L} = \{x: f(\mathbf{x}) \leq f(\mathbf{x_0}) \}$, where $\mathbf{x_0}$ is the starting point of the iteration. 
+                \item $\nabla f$ is \alert{Lipschitz continous} on $\mathcal{N}$. 
+            \end{itemize}
+            Then, $\exists M \in \R$ such that
+            $$\sum_{k=0}^{\infty} \cos^2(\theta_k)\Vert \nabla f\Vert^2 \leq M$$ 
+
+        \end{block}
+    \end{frame}
+
+    \begin{frame}{Convergence of Line Search (2)}
+        \begin{alertblock}{Proof}
+            From second Wolfe condition, and $\mathbf{x_{k+1}} = \mathbf{x_k} + \alpha_k \mathbf{p_k}$, 
+            $$(\nabla f(\mathbf{x_{k+1}}) - \nabla f_k)^\top \mathbf{p_k} \geq (c_2 - 1)\nabla f_k^\top \mathbf{p_k}$$
+            And the Lipschitz condition implies that $\exists L$ such that
+            $$(\nabla f(\mathbf{x_{k+1}}) - \nabla f(\mathbf{x_k}))^\top \mathbf{p_k} \leq \alpha_k L \Vert \mathbf{p_k} \Vert^2$$
+        \end{alertblock}
+    \end{frame}
+
+    \begin{frame}{Convergence of Line Search (3)}
+        \begin{alertblock}{Proof (continued)}
+            Combining the two previous results yields
+            $$\alpha_k \geq \frac{c_2-1}{L} \frac{(\nabla f(\mathbf{x_k})^\top \mathbf{p_k})^2}{\Vert \mathbf{p_k}\Vert^2} $$
+            Substituting this into the first Wolfe condition gives
+            $$f(\mathbf{x_{k+1}}) \leq f(\mathbf{x_k}) - c_1 \frac{1-c_2}{L} \frac{(\nabla f(\mathbf{x_k})^\top\mathbf{p_k})^2}{\Vert \mathbf{p_k}\Vert^2}$$  
+        \end{alertblock}
+    \end{frame}
+
+    \begin{frame}{Convergence of Line Search (4)}
+
+        \begin{alertblock}{Proof (continued)}
+            Using $cos(\theta_k) = \frac{\nabla f(\mathbf{x_k})^\top\mathbf{p_k}}{\Vert \nabla f(\mathbf{x_k}) \Vert \Vert \mathbf{p_k} \Vert}$
+            yields $$f(\mathbf{x_{k+1}}) \leq f(\mathbf{x_k} - c\cos^2{\theta_k}) \Vert \nabla f(\mathbf{x_k}) \Vert^2$$ where $c = \frac{c_1(1-c_2)}{L}$. \\
+            Sum this expression over all indices up to $k$ to obtain 
+            $$ f(\mathbf{x_{k+1}}) \leq f(\mathbf{x_0}) - c \sum_{j=0}^k \cos^2{\theta_j}) \Vert \nabla f(\mathbf{x_j}).$$
+        \end{alertblock}
+    \end{frame}
+
+    \begin{frame}{Convergence of Line Search (5)}
+        We know that $f$ is bounded below, hence for some $C$, $f({\mathbf{x_0}}) - f(x\mathbf{x_{k+1}}) < C$. By taking limits in the expression in the previous slide, we get 
+        $$\sum_{k=0}^{\infty} \cos^2(\theta_k) \Vert \nabla f(\mathbf{x_{k}}) \vert ^2 < M$$
+        For some $M > 0$. \qed
+    \end{frame}
+
+    \begin{frame}{Convergence of Line Search (6)}
+        \begin{block}{Line Search Converges}
+            The sequence of points $\{\mathbf{x_k} \}$ given by $\mathbf{x_{k+1}} = \mathbf{x_k} + \alpha_k \mathbf{p_k}$ (where $\mathbf{p_k}$ is a descent direction and $\alpha_k$ satisfies the Wolfe conditions) converges to a \alert{stationary point}.
+        \end{block}
+
+        \begin{alertblock}{Proof}
+            As $p_k$ is a descent direction, $\frac{\pi}{2} < \theta_k < \frac{\pi}{2}$. Thus $\exists \delta > 0$ such that for all $k$, $\cos(\theta_k) > \delta$.
+            We have $\sum_{k=0}^{\infty}\cos^2(\theta_k)\Vert \nabla f(\mathbf{x_k}) \Vert^2 < M$ hence we must have
+            $$ \lim_{k \rightarrow \infty} \Vert \nabla f(\mathbf{x_k})\Vert = 0$$ \qed
+        \end{alertblock}
+    \end{frame}
+
+    \begin{frame}{Visualization}
+        \href{https://www.benfrederickson.com/numerical-optimization/}{https://www.benfrederickson.com/numerical-optimization/}
+    \end{frame}
+
+
+    \begin{frame}{References}
+        \begin{itemize}
+        \item W. Rudin, \textit{Principles of Mathematical Analysis}, McGraw-Hill, 1976.
+        
+        \item J. Nocedal, S. Wright, \textit{Numerical Optimization}, Springer, 2006.
+        \end{itemize}
+    \end{frame}
+
+
+\end{document}
